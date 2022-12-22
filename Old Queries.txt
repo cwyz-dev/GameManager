@@ -1,0 +1,36 @@
+--Game counts
+--SELECT COUNT(game_name) as TotalGames, COUNT(DISTINCT(game_name)) as UniqueGames, (COUNT(game_name)-COUNT(DISTINCT(game_name))) as Duplicates FROM games;
+
+--Duplicate games
+--SELECT COUNT(DISTINCT(g1.game_name)) FROM games g1 WHERE (SELECT COUNT(g2.game_name) FROM games g2 WHERE g2.game_name like g1.game_name) > 1
+
+--Completion times
+--SELECT SUM(completion_time)/(60*24) FROM (SELECT DISTINCT game_name, completion_time FROM games)
+--SELECT SUM(completion_time)/(60*24*365.25) FROM games
+
+--File sizes
+--SELECT SUM(file_size)/(1000000000000) FROM games
+
+--Game names
+--SELECT DISTINCT(g.game_name), c.console_name FROM games g LEFT JOIN platforms p ON g.platform_id = p.custom_platform_id LEFT JOIN consoles c ON p.console_id = c.custom_console_id WHERE g.shame = 0 AND g.error = 0 AND g.legal = 1 AND p.platform_name <> 'ROM' AND (g.value <> 0 AND g.value is not null) ORDER BY lower(game_name)
+
+--Cost Value Analysis
+--SELECT IFNULL(a,0)+IFNULL(c,0)+IFNULL(e,0) as cost, IFNULL(b,0)+IFNULL(d,0)+IFNULL(f,0) as value, ((IFNULL(a,0)+IFNULL(c,0)+IFNULL(e,0))/(IFNULL(b,0)+IFNULL(d,0)+IFNULL(f,0)))*100 as percent_value FROM (SELECT SUM(g.cost) as a, SUM(g.value) as b FROM games g WHERE g.legal = 1 AND g.shame = 0 AND g.error = 0), (SELECT SUM(h.cost) as c, SUM(h.value) as d FROM hardware h), (SELECT SUM(t.cost) as e, SUM(t.value) as f FROM toys_to_life t)
+--SELECT IFNULL(a,0)+IFNULL(c,0)+IFNULL(e,0) as cost, IFNULL(b,0)+IFNULL(d,0)+IFNULL(f,0) as value, ((IFNULL(a,0)+IFNULL(c,0)+IFNULL(e,0))/(IFNULL(b,0)+IFNULL(d,0)+IFNULL(f,0)))*100 as percent_value FROM (SELECT SUM(g.cost) as a, SUM(g.value) as b FROM games g), (SELECT SUM(h.cost) as c, SUM(h.value) as d FROM hardware h), (SELECT SUM(t.cost) as e, SUM(t.value) as f FROM toys_to_life t)
+
+--Find a game
+--SELECT g.game_name, p.platform_name, c.console_name FROM games g LEFT JOIN platforms p on g.platform_id = p.custom_platform_id LEFT JOIN consoles c on p.console_id = c.custom_console_id WHERE g.game_name LIKE '%grand theft auto%' AND p.platform_name NOT LIKE '%ROM%' AND g.legal = 1
+
+--100% on Steam
+--SELECT game_name, game_edition FROM games g LEFT JOIN platforms p ON g.platform_id = p.custom_platform_id WHERE p.platform_name LIKE '%101%' AND g.game_achieve_earned = g.game_achieve_total AND (g.game_achieve_total NOT LIKE '')
+
+--Longer than a certain time
+--SELECT game_name FROM games g WHERE g.legal = 1 AND g.shame = 0 AND g.error = 0 AND g.completion_time >= 43200 AND g.completion_time NOT LIKE '' ORDER BY g.game_name
+
+--Console names
+--SELECT DISTINCT(c.console_name) FROM hardware h LEFT JOIN consoles c ON h.console_id = c.custom_console_id WHERE c.console_name is not NULL AND (h.hardware_type LIKE '%console%' OR h.hardware_type LIKE '%handheld%' OR h.hardware_type LIKE '%cpu%')
+
+--Averages
+--SELECT SUM(g.cost)/COUNT(g.game_name) FROM games g WHERE g.error <> 1 and g.legal = 1
+--SELECT SUM(g.value)/COUNT(g.game_name) FROM games g WHERE g.error <> 1 and g.legal = 1
+--SELECT (SUM(g.value)-SUM(g.cost))/COUNT(g.game_name) FROM games g WHERE g.error <> 1 and g.legal = 1

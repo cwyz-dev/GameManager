@@ -1,0 +1,83 @@
+-- Game names
+SELECT DISTINCT(s.software_name) FROM softwares s LEFT JOIN platforms p ON s.platform = p.platform_id LEFT JOIN consoles c ON p.console = c.console_id WHERE s.shame = 0 AND s.error = 0 AND s.legal = 1 AND p.platform_name <> 'ROM' AND (s.value <> 0 AND s.value is not null) ORDER BY lower(s.software_name)
+
+-- Console names
+SELECT DISTINCT(c.console_name) FROM hardwares h LEFT JOIN consoles c ON h.console = c.console_id LEFT JOIN hardware_types ht ON h.hardware_type = ht.hardware_type_id WHERE NOT(c.console_name IS NULL OR c.console_name LIKE '') AND ht.type_name IS NOT NULL AND (ht.type_name LIKE '%console%' OR ht.type_name LIKE '%handheld%' OR ht.type_name LIKE '%cpu%' OR ht.type_name LIKE '%computer%')
+
+-- TTL names
+SELECT DISTINCT(t.ttl_name) FROM toys_to_life t LEFT JOIN ttl_types tt ON t.ttl_type = tt.ttl_type_id WHERE t.legal = 1 AND t.error = 0 AND tt.type_name NOT LIKE '%starter pack%'
+
+-- Cost ratio
+SELECT (SELECT (SELECT SUM(cost) FROM softwares WHERE legal = 1 AND error = 0) + (SELECT SUM(cost) FROM hardwares WHERE error = 0) + (SELECT SUM(cost) FROM toys_to_life WHERE error = 0)) / (SELECT (SELECT SUM(value) FROM softwares WHERE legal = 1 AND error = 0) + (SELECT SUM(value) FROM hardwares WHERE error = 0) + (SELECT SUM(value) FROM toys_to_life WHERE error = 0))
+
+-- Cost ratio physical only
+SELECT (SELECT SUM(cost) FROM softwares s LEFT JOIN software_physical sp ON s.software_id = sp.software WHERE sp.software_physical_id IS NOT NULL) + (SELECT SUM(cost) FROM hardwares WHERE error = 0) + (SELECT SUM(cost) FROM toys_to_life WHERE error = 0)) / (SELECT (SELECT SUM(value) FROM softwares s LEFT JOIN software_physical sp ON s.software_id = sp.software WHERE sp.software_physical_id IS NOT NULL) + (SELECT SUM(value) FROM hardwares WHERE error = 0) + (SELECT SUM(value) FROM toys_to_life WHERE error = 0))
+
+-- Value of physical collection
+SELECT (SELECT SUM(value) FROM softwares s LEFT JOIN software_physical sp ON s.software_id = sp.software WHERE sp.software_physical_id IS NOT NULL) + (SELECT SUM(value) FROM hardwares WHERE error = 0) + (SELECT SUM(value) FROM toys_to_life WHERE error = 0)
+
+-- Value of physical collection at end of a year
+SELECT (SELECT SUM(value) FROM softwares s LEFT JOIN software_physical sp ON s.software_id = sp.software WHERE sp.software_physical_id IS NOT NULL AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000')) + (SELECT SUM(value) FROM hardwares WHERE error = 0 AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000')) + (SELECT SUM(value) FROM toys_to_life WHERE error = 0 AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000'))
+
+-- Cost of collection
+SELECT (SELECT SUM(cost) FROM softwares s WHERE legal = 1 AND error = 0) + (SELECT SUM(cost) FROM hardwares WHERE error = 0) + (SELECT SUM(cost) FROM toys_to_life WHERE error = 0)
+
+-- Earliest date in collection
+SELECT MIN(date_acquired) FROM softwares s WHERE legal = 1 AND error = 0 UNION SELECT MIN(date_acquired) FROM hardwares h WHERE error = 0 AND date_acquired <> "" UNION SELECT MIN(date_acquired) FROM toys_to_life ttl WHERE error = 0
+
+-- Value of physical collection at end of a year
+SELECT (SELECT IFNULL(SUM(value),0) FROM softwares s LEFT JOIN software_physical sp ON s.software_id = sp.software WHERE sp.software_physical_id IS NOT NULL AND STRFTIME('%s', s.date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000')) + (SELECT IFNULL(SUM(value),0) FROM hardwares WHERE error = 0 AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000')) + (SELECT IFNULL(SUM(value),0) FROM toys_to_life WHERE error = 0 AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000'))
+
+-- Total Value
+SELECT (SELECT SUM(value) FROM softwares WHERE legal = 1 AND error = 0) + (SELECT SUM(value) FROM hardwares WHERE error = 0) + (SELECT SUM(value) FROM toys_to_life WHERE error = 0)
+
+-- Total value at end of a year
+SELECT (SELECT IFNULL(SUM(value),0) FROM softwares WHERE legal = 1 AND error = 0 AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000')) + (SELECT IFNULL(SUM(value),0) FROM hardwares WHERE error = 0 AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000')) + (SELECT IFNULL(SUM(value),0) FROM toys_to_life WHERE error = 0 AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2017-01-01 00:00:00.00000'))
+
+
+
+
+SELECT
+    (
+    SELECT
+        IFNULL(
+            SUM(s.value),
+            0
+        )
+    FROM
+        softwares s
+    WHERE
+        s.error=0
+        AND s.legal=1
+        --AND STRFTIME('%s', s.date_acquired) < STRFTIME('%s', '2022-01-01 00:00:00.00000')
+        AND s.software_id IN (
+            SELECT
+                sp.software
+            FROM
+               software_physical sp
+        )
+    )
+    + (
+    SELECT
+        IFNULL(
+            SUM(value),
+            0
+        )
+    FROM
+        hardwares
+    WHERE
+        error=0
+        --AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2022-01-01 00:00:00.00000')
+    )
+    + (
+    SELECT
+        IFNULL(
+            SUM(value),
+            0
+        )
+    FROM
+        toys_to_life
+    WHERE
+        error=0
+        --AND STRFTIME('%s', date_acquired) < STRFTIME('%s', '2022-01-01 00:00:00.00000')
+    ) AS value

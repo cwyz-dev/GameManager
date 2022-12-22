@@ -1,0 +1,9 @@
+QUALITY
+	Missing - (-1)
+	Broken - 0
+	Bad - 1
+	Near-Mint - 9
+	Mint - 10
+	Sealed - 11
+
+Modified- (Has had non-original materials added to it)
